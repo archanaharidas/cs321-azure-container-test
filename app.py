@@ -6,7 +6,7 @@ app = Flask(__name__)
 def home():
     return """
     <h1>CS 321 Azure Container Test</h1>
-    <p>Version 1 deployed from GitHub.</p>
+    <p>Version 2 deployed automatically from GitHub.</p>
     """
 
 if __name__ == "__main__":
