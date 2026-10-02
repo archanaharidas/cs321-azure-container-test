@@ -13,7 +13,7 @@ jobs:
   docker-ci:
     uses: ./.github/workflows/reusable-docker-ci.yml
     with:
-      dockerfile: Dockerfile
-      container-port: 8080
+      dockerfile: node-test/Dockerfile
+      container-port: 3000
       health-path: /
       smoke-test: true
