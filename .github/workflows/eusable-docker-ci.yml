@@ -1,0 +1,68 @@
+name: Reusable CS321 Docker CI
+
+on:
+  workflow_call:
+    inputs:
+      dockerfile:
+        required: false
+        type: string
+        default: Dockerfile
+
+      container-port:
+        required: false
+        type: number
+        default: 8080
+
+      health-path:
+        required: false
+        type: string
+        default: /
+
+      smoke-test:
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  docker-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f "${{ inputs.dockerfile }}" -t cs321-ci-test .
+
+      - name: Start container
+        if: inputs.smoke-test
+        run: |
+          docker run -d \
+            --name cs321-ci \
+            -p 18080:${{ inputs.container-port }} \
+            cs321-ci-test
+
+      - name: Smoke test application
+        if: inputs.smoke-test
+        run: |
+          for i in {1..15}; do
+            if curl --fail --silent \
+              "http://localhost:18080${{ inputs.health-path }}"; then
+              echo "Application is responding."
+              exit 0
+            fi
+
+            echo "Waiting for application..."
+            sleep 2
+          done
+
+          echo "Application did not respond."
+          docker logs cs321-ci
+          exit 1
+
+      - name: Stop container
+        if: always() && inputs.smoke-test
+        run: docker rm -f cs321-ci || true
