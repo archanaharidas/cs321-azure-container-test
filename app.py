@@ -2,7 +2,7 @@ from flask import Flask
 
 app = Flask(__name__)
 
-@app.route("/")
+@app.route("/broken")
 def home():
     return """
     <h1>CS 321 Azure Container Test</h1>
