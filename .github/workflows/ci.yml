@@ -1,0 +1,19 @@
+name: CS321 Docker CI Prototype
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-ci:
+    uses: ./.github/workflows/reusable-docker-ci.yml
+    with:
+      dockerfile: node-test/Dockerfile
+      container-port: 3000
+      health-path: /
+      smoke-test: true
