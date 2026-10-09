@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   docker-ci:
-    uses: ./.github/workflows/reusable-docker-ci.yml
+    uses: archanaharidas/cs321-shared-ci-test/.github/workflows/reusable-docker-ci.yml@main
     with:
       dockerfile: java-test/Dockerfile
       container-port: 8080
