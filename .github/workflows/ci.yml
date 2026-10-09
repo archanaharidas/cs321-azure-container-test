@@ -1,0 +1,19 @@
+name: CS321 Docker CI Prototype
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-ci:
+    uses: archanaharidas/cs321-shared-ci-test/.github/workflows/reusable-docker-ci.yml@main
+    with:
+      dockerfile: java-test/Dockerfile
+      container-port: 8080
+      health-path: /
+      smoke-test: true
