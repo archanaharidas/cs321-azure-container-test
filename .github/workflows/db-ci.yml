@@ -1,0 +1,94 @@
+name: CS321 Database CI Prototype
+
+on:
+  push:
+    branches:
+      - db-ci-prototype
+  pull_request:
+    branches:
+      - ci-prototype
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  database-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Docker network
+        run: docker network create cs321-network
+
+      - name: Start PostgreSQL
+        run: |
+          docker run -d \
+            --name postgres \
+            --network cs321-network \
+            -e POSTGRES_DB=cs321 \
+            -e POSTGRES_USER=cs321 \
+            -e POSTGRES_PASSWORD=cs321 \
+            postgres:16-alpine
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..20}; do
+            if docker exec postgres pg_isready -U cs321 -d cs321; then
+              echo "PostgreSQL is ready."
+              exit 0
+            fi
+
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+          echo "PostgreSQL did not become ready."
+          docker logs postgres
+          exit 1
+
+      - name: Build application container
+        run: |
+          docker build \
+            -f db-test/Dockerfile \
+            -t cs321-db-test .
+
+      - name: Start application
+        run: |
+          docker run -d \
+            --name cs321-app \
+            --network cs321-network \
+            -p 18080:8080 \
+            -e DB_HOST=postgres \
+            -e DB_PORT=5432 \
+            -e DB_NAME=cs321 \
+            -e DB_USER=cs321 \
+            -e DB_PASSWORD=cs321 \
+            cs321-db-test
+
+      - name: Test application and database connection
+        run: |
+          for i in {1..20}; do
+            if curl --fail --silent http://localhost:18080/health; then
+              echo ""
+              echo "Application successfully connected to PostgreSQL."
+              exit 0
+            fi
+
+            echo "Waiting for application..."
+            sleep 2
+          done
+
+          echo "Database integration test failed."
+          docker logs cs321-app
+          docker logs postgres
+          exit 1
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f cs321-app || true
+          docker rm -f postgres || true
+          docker network rm cs321-network || true
