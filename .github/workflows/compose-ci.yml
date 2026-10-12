@@ -1,0 +1,51 @@
+name: CS321 Docker Compose CI Prototype
+
+on:
+  push:
+    branches:
+      - db-ci-prototype
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compose-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start application and database
+        run: |
+          docker compose \
+            -f db-test/docker-compose.yml \
+            up -d --build
+
+      - name: Test integrated application
+        run: |
+          for i in {1..20}; do
+            if curl --fail --silent http://localhost:18080/health; then
+              echo ""
+              echo "Docker Compose integration test passed."
+              exit 0
+            fi
+
+            echo "Waiting for application..."
+            sleep 2
+          done
+
+          echo "Docker Compose integration test failed."
+          docker compose \
+            -f db-test/docker-compose.yml \
+            logs
+
+          exit 1
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose \
+            -f db-test/docker-compose.yml \
+            down -v
