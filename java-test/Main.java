@@ -18,7 +18,7 @@ public class Main {
 
             PrintWriter out = new PrintWriter(socket.getOutputStream());
 
-            if (line != null && line.contains("GET /broken ")) {
+            if (line != null && line.contains("GET / ")) {
                 String body = "CS321 Java CI test is working";
 
                 out.print(
